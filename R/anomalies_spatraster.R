@@ -18,6 +18,7 @@ anomalies_spatraster <- function(input,
   tb <- tt[i_base]
 
   # numeric time in years for regressions
+  tn <- year(tt) + (month(tt) - 1/2)/12
   tn_years <- year(tb) + (month(tb) - 1/2)/12
   t0_years <- mean(tn_years, na.rm = TRUE)
 
@@ -27,12 +28,11 @@ anomalies_spatraster <- function(input,
                      fun = trend_fit,
                      tn = tn_years, t0 = t0_years)
 
-
   names(trend_stack) <- c("intercept_t0", "slope_per_year")
 
   # --- optional detrend for anomaly computation
   if (isTRUE(detrend)) {
-    input <- app(input, fun = detrend_linear, tn = tn_years)
+    input <- input - (trend_stack[[1]] + trend_stack[[2]]*tn)
   }
 
 

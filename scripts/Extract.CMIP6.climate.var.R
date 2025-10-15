@@ -9,9 +9,9 @@ library(Drying.CB)
 files <- list.files("/data/gent/vo/000/gvo00074/ED_common_data/met/Precip.Tropics/CMIP6/",
                     pattern = "*.tif$",
                     full.names = TRUE)
-files <- files[grepl("E3SM-2-0",files) &
-                 grepl("historical",files) &
-                 grepl("pr",files)]
+# files <- files[grepl("E3SM-2-0",files) &
+#                  grepl("historical",files) &
+#                  grepl("pr",files)]
 
 Mask <- read_sf("./data/Rainforests.shp")
 
@@ -81,15 +81,6 @@ for (ifile in seq(1,length(files))){
   df.all <- bind_rows(df.all,
                       cdf2save)
 
-
-  input = cdata.msk[[1:10]]
-
-  for (i in seq(1,nlyr(input))){
-    print(i)
-    input[[i]] <- input[[i]]*0 + i
-  }
-
-  stop()
   ##########################################################
   # Anomalies
   anomalies <- anomalies_spatraster(input = cdata.msk,
