@@ -4,6 +4,7 @@ library(dplyr)
 library(lubridate)
 library(terra)
 library(sf)
+library(Drying.CB)
 
 products <- c("GOSIF","FLUXSAT","MODIS")
 
@@ -14,6 +15,10 @@ main.dir <- '/data/gent/vo/000/gvo00074/felicien/GPP_data'
 Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
+
+baseline_start <- as.Date("1961-01-01")
+baseline_end   <- as.Date("2014-12-31")
+
 for (iproduct in seq(1,length(products))){
 
   cproduct <- products[iproduct]
@@ -44,12 +49,30 @@ for (iproduct in seq(1,length(products))){
   df.all <- bind_rows(df.all,
                       cdf2save)
 
+  ##########################################################
+  # Anomalies
+  anomalies <- anomalies_spatraster(input = cdata.msk,
+                                    baseline_start = baseline_start,
+                                    baseline_end   = baseline_end,
+                                    detrend = TRUE)
+
+  writeRaster(anomalies$trend,
+              paste0("./outputs/",
+                     cproduct,"_GPP_trends.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
+  time(anomalies$anom) <- as.Date(dates)
+  writeRaster(anomalies$anom,
+              paste0("./outputs/",
+                     cproduct,"_GPP_anomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 }
 
 saveRDS(df.all,
         "./outputs/All.GPP.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.GPP.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.GPP.var.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 
 

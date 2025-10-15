@@ -157,8 +157,14 @@ for (itime in seq(1,nrow(times))){
 crast <- rast(all.rast)
 time(crast) <- dates
 
+plot(crast[[392]])
+
 writeRaster(crast,
             paste0("./outputs/","Radar_all.years.tif"),
             overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
-plot(crast[[392]])
+system2("rsync",
+        c("-avz",
+          "./outputs/Radar_all.years.*",
+          "hpc:/data/gent/vo/000/gvo00074/felicien/R/data/Radar/"))
+

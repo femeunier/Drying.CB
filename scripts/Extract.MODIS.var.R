@@ -4,13 +4,11 @@ library(dplyr)
 library(lubridate)
 library(terra)
 library(sf)
+library(Drying.CB)
 
 vars <- c("NDVI",
           "EVI",
           "Pixel.Reliability")
-
-vars <- c("NDVI",
-          "EVI")
 
 files <- list.files("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/",
                     pattern = paste0(paste0(vars,".*all.years.tif$"),collapse = "|"),
@@ -19,6 +17,9 @@ files <- list.files("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/",
 Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
+
+baseline_start <- as.Date("1961-01-01")
+baseline_end   <- as.Date("2014-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -35,6 +36,8 @@ for (ifile in seq(1,length(files))){
 
   cdata.msk <- crop(mask(cdata,Mask),
                     ext(-25,65,-25,25))
+  cdata.msk <- project(cdata.msk,
+                       "EPSG:4326")
 
   ts <- global(cdata.msk,mean,na.rm = TRUE)
 
@@ -46,14 +49,29 @@ for (ifile in seq(1,length(files))){
     mutate(var = cvar,
            product = cproduct)
 
-  if ((cvar %in% c("tas","tasmin","tasmax")) &
-      (mean(cdf2save$value,na.rm = TRUE) > 200)){
-    cdf2save <- cdf2save %>%
-      mutate(value = value - 273.15)
-  }
-
   df.all <- bind_rows(df.all,
                       cdf2save)
+
+
+  ##########################################################
+  # Anomalies
+  anomalies <- anomalies_spatraster(input = cdata.msk,
+                                    baseline_start = baseline_start,
+                                    baseline_end   = baseline_end,
+                                    detrend = TRUE)
+
+  writeRaster(anomalies$trend,
+              paste0("./outputs/",
+                     "MODIS_",cvar,"_trends.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  time(anomalies$anom) <- as.Date(dates)
+  writeRaster(anomalies$anom,
+              paste0("./outputs/",
+                     "MODIS_",cvar,"_anomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
 }
 
 saveRDS(df.all,

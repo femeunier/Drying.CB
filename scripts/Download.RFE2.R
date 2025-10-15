@@ -214,13 +214,16 @@ files <- list.files("./data/RFE2/",pattern = "*.tif",full.names = TRUE)
 ym  <- sub("^.*_(\\d{6})\\.tif$", "\\1", basename(files), perl = TRUE)
 
 A <- rast(files)
-time(A) <- as.Date(paste0(ym, "01"), "%Y%m%d")
+A_aligned <- project(A, "EPSG:4326")
+time(A_aligned) <- as.Date(paste0(ym, "01"), "%Y%m%d")
 
 coord <- expand.grid(lon = seq(-179.75,179.75,0.5),
                      lat = seq(-30.25,30.25,0.5)) %>%
   mutate(value = 1)
 craster <- rast(raster::rasterFromXYZ(coord))
-A.rspld <- resample(A,craster)
+A.rspld <- resample(A_aligned,craster)
+A.rspld_aligned <- project(A.rspld,
+                           "EPSG:4326")
 
 writeRaster(A.rspld,
             paste0("./outputs/RFE2_pre_all.years.tif"),

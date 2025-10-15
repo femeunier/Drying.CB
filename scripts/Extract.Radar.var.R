@@ -6,25 +6,23 @@ library(terra)
 library(sf)
 library(Drying.CB)
 
-files <- list.files("./data/GRACE/",
+files <- list.files("/data/gent/vo/000/gvo00074/felicien/R/data/Radar/",
                     pattern = "*.tif$",
-                    full.names = TRUE)[c(1,3,4)]
+                    full.names = TRUE)
 
 Mask <- read_sf("./data/Rainforests.shp")
 
+df.all <- data.frame()
+
 baseline_start <- as.Date("1961-01-01")
 baseline_end   <- as.Date("2014-12-31")
-
-df.all <- data.frame()
 
 for (ifile in seq(1,length(files))){
 
   cfile <- files[ifile]
   file.split <- strsplit(basename(cfile),"_")[[1]]
-  cproduct <- "GRACE"
-  cvar <- file.split[1]
-
-  if (!(cvar %in% c("tws","std","model","leakage"))) next()
+  cproduct <- "Radar"
+  cvar <- "Cbackscatter"
 
   print(paste0(cproduct,"-",cvar))
 
@@ -57,21 +55,20 @@ for (ifile in seq(1,length(files))){
 
   writeRaster(anomalies$trend,
               paste0("./outputs/",
-                     "GRACE_",cvar,"_trends.tif"),
+                     "Radar_",cvar,"_trends.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
-
 
   time(anomalies$anom) <- as.Date(dates)
   writeRaster(anomalies$anom,
               paste0("./outputs/",
-                     "GRACE_",cvar,"_anomalies.tif"),
+                     "Radar_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
 }
 
 saveRDS(df.all,
-        "./outputs/All.GRACE.CA.RDS")
+        "./outputs/All.Radar.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.GRACE.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.Radar.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

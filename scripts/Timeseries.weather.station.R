@@ -57,6 +57,9 @@ all.data.long <- all.data %>%
                values_to = "value") %>%
   na.omit()
 
+
+
+
 ggplot(data = all.data.long) +
   geom_density(aes(x = value),
                alpha = 0.5, color = NA, fill = "grey") +

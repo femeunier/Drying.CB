@@ -4,6 +4,7 @@ library(dplyr)
 library(lubridate)
 library(terra)
 library(sf)
+library(Drying.CB)
 
 files <- list.files("/data/gent/vo/000/gvo00074/felicien/GLEAM/",
                     pattern = "*.tif$",
@@ -12,6 +13,9 @@ files <- list.files("/data/gent/vo/000/gvo00074/felicien/GLEAM/",
 Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
+
+baseline_start <- as.Date("1961-01-01")
+baseline_end   <- as.Date("2014-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -50,6 +54,27 @@ for (ifile in seq(1,length(files))){
 
   df.all <- bind_rows(df.all,
                       cdf2save)
+
+  ##########################################################
+  # Anomalies
+  anomalies <- anomalies_spatraster(input = cdata.msk,
+                                    baseline_start = baseline_start,
+                                    baseline_end   = baseline_end,
+                                    detrend = TRUE)
+
+  writeRaster(anomalies$trend,
+              paste0("./outputs/CMIP6.CA/",
+                     "GLEAM_",cvar,"_trends.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  time(anomalies$anom) <- as.Date(dates)
+  writeRaster(anomalies$anom,
+              paste0("./outputs/CMIP6.CA/",
+                     "GLEAM_",cvar,"_anomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
+
 }
 
 saveRDS(df.all,

@@ -1,6 +1,6 @@
 anomalies_spatraster <- function(input,
-                                 baseline_start = as.Date("1981-01-01"),
-                                 baseline_end   = as.Date("2010-12-31"),
+                                 baseline_start = as.Date("1900-01-01"),
+                                 baseline_end   = as.Date("1900-12-31"),
                                  detrend = FALSE) {
 
   # Time vector
@@ -11,12 +11,23 @@ anomalies_spatraster <- function(input,
   # Keep a copy of the raw series for trend estimation
   input_raw <- input
 
+  # Baseline subset
+  i_base <- which(!is.na(tt) & tt >= baseline_start & tt <= baseline_end)
+  if (length(i_base) == 0) stop("No layers fall within the chosen baseline period.")
+  rb <- input[[i_base]]
+  tb <- tt[i_base]
+
   # numeric time in years for regressions
-  tn_years <- as.numeric(tt) / 365.2425
+  tn_years <- year(tb) + (month(tb) - 1/2)/12
   t0_years <- mean(tn_years, na.rm = TRUE)
 
+
   # --- linear trend on RAW data (two-layer raster: intercept_at_t0, slope_per_year)
-  trend_stack <- app(input_raw, fun = trend_fit, tn = tn_years, t0 = t0_years)
+  trend_stack <- app(input_raw[[i_base]],
+                     fun = trend_fit,
+                     tn = tn_years, t0 = t0_years)
+
+
   names(trend_stack) <- c("intercept_t0", "slope_per_year")
 
   # --- optional detrend for anomaly computation
@@ -24,11 +35,7 @@ anomalies_spatraster <- function(input,
     input <- app(input, fun = detrend_linear, tn = tn_years)
   }
 
-  # Baseline subset
-  i_base <- which(!is.na(tt) & tt >= baseline_start & tt <= baseline_end)
-  if (length(i_base) == 0) stop("No layers fall within the chosen baseline period.")
-  rb <- input[[i_base]]
-  tb <- tt[i_base]
+
 
   # Month indices without format()
   m_all  <- as.POSIXlt(tt)$mon + 1L

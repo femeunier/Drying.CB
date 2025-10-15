@@ -29,6 +29,7 @@ all.metadata <-
   mutate(station_id = case_when(station_id == "0" ~ NA_character_,
                                 TRUE ~ station_id))
 
+
 ######################################################################
 
 all.data <-
