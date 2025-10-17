@@ -80,6 +80,14 @@ for (ifile in seq(1,length(files))){
                      "GLEAM_",cvar,"_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
+
+  time(anomalies$roll_mean_input) <- as.Date(anomalies$roll_times)
+  writeRaster(anomalies$roll_mean_input,
+              paste0("./outputs/",
+                     "GLEAM_",cvar,"_Rollmeaninput.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
 }
 
 saveRDS(df.all,
