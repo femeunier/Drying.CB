@@ -1,4 +1,4 @@
-anomalies_spatraster <- function(input,
+anomalies_spatraster_roll <- function(input,
                                  baseline_start = as.Date("1981-01-01"),
                                  baseline_end   = as.Date("2010-12-31"),
                                  detrend = FALSE,
