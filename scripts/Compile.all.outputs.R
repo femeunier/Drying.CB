@@ -54,15 +54,12 @@ saveRDS(all.ts,
 ###################################################################
 
 All.trends.files <-
-  c(list.files("./outputs/",
+  c(list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                "*_trends.tif",
                full.names = TRUE),
-    list.files("./outputs/CMIP6.CA/",
+    list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
                "*_trends.tif",
-               full.names = TRUE),
-    list.files("./outputs/climate.vars/",
-               "*_trends.tif",
-               full.names = TRUE) )
+               full.names = TRUE))
 
 all.slopes <- data.frame()
 for (ifile in seq(1,length(All.trends.files))){
@@ -117,13 +114,11 @@ saveRDS(all.slopes,
 
 ###################################################################
 
+
 All.anomalies.files <-
-  c(list.files("./outputs/",
+  list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                "*_anomalies.tif",
-               full.names = TRUE),
-    list.files("./outputs/climate.vars/",
-               "*_anomalies.tif",
-               full.names = TRUE))
+               full.names = TRUE)
 
 all.anomalies <- data.frame()
 for (ifile in seq(1,length(All.anomalies.files))){
@@ -176,12 +171,9 @@ saveRDS(all.anomalies,
 ###################################################################
 
 All.Zanomalies.files <-
-  c(list.files("./outputs/",
+  list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                "*_Zanomalies.tif",
-               full.names = TRUE),
-    list.files("./outputs/climate.vars/",
-               "*_Zanomalies.tif",
-               full.names = TRUE))
+               full.names = TRUE)
 
 all.Zanomalies <- data.frame()
 for (ifile in seq(1,length(All.Zanomalies.files))){
@@ -229,6 +221,117 @@ for (ifile in seq(1,length(All.Zanomalies.files))){
 
 saveRDS(all.Zanomalies,
         "./outputs/All.Zanomalies.CA.RDS")
+
+
+###################################################################
+
+All.trendsanomalies.files <-
+  c(list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+               "*_trendsanomalies.tif",
+               full.names = TRUE),
+    list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
+               "*_trendsanomalies.tif",
+               full.names = TRUE))
+
+all.slopes.anomalies <- data.frame()
+for (ifile in seq(1,length(All.trendsanomalies.files))){
+
+  cfile <- All.trendsanomalies.files[ifile]
+
+  print(cfile)
+
+  csplit <- strsplit(tools::file_path_sans_ext(
+    basename(cfile)),"\\_")[[1]]
+
+  if (length(csplit) == 3){
+    cmodel <- csplit[1]
+    cvar <- csplit[2]
+    cperiod <- "historical"
+    ctype <- "Observational"
+  } else {
+    cmodel <- csplit[1]
+    cperiod <- csplit[2]
+    cvar <- csplit[3]
+    ctype <- "CMIP6"
+  }
+
+  cr <- rast(cfile)
+  cslope <- cr[[2]]
+
+  cslope.df <- as.data.frame(cslope,xy = TRUE) %>%
+    dplyr::rename(lon = x,
+                  lat = y)
+
+  all.slopes.anomalies <- bind_rows(
+    all.slopes.anomalies,
+    cslope.df %>%
+      left_join(cintercept.df,
+                by = c("lon","lat")) %>%
+      mutate(model = cmodel,
+             period = cperiod,
+             var = cvar,
+             type = ctype))
+
+}
+
+saveRDS(all.slopes.anomalies,
+        "./outputs/All.slopesanomalies.CA.RDS")
+
+
+###################################################################
+
+All.trendsZanomalies.files <-
+  c(list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+               "*_trendsZanomalies.tif",
+               full.names = TRUE),
+    list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
+               "*_trendsZanomalies.tif",
+               full.names = TRUE))
+
+all.slopes.Zanomalies <- data.frame()
+for (ifile in seq(1,length(All.trendsZanomalies.files))){
+
+  cfile <- All.trendsZanomalies.files[ifile]
+
+  print(cfile)
+
+  csplit <- strsplit(tools::file_path_sans_ext(
+    basename(cfile)),"\\_")[[1]]
+
+  if (length(csplit) == 3){
+    cmodel <- csplit[1]
+    cvar <- csplit[2]
+    cperiod <- "historical"
+    ctype <- "Observational"
+  } else {
+    cmodel <- csplit[1]
+    cperiod <- csplit[2]
+    cvar <- csplit[3]
+    ctype <- "CMIP6"
+  }
+
+  cr <- rast(cfile)
+  cslope <- cr[[2]]
+
+  cslope.df <- as.data.frame(cslope,xy = TRUE) %>%
+    dplyr::rename(lon = x,
+                  lat = y)
+
+  all.slopes.Zanomalies <- bind_rows(
+    all.slopes.Zanomalies,
+    cslope.df %>%
+      left_join(cintercept.df,
+                by = c("lon","lat")) %>%
+      mutate(model = cmodel,
+             period = cperiod,
+             var = cvar,
+             type = ctype))
+
+}
+
+saveRDS(all.slopes.Zanomalies,
+        "./outputs/All.slopesZanomalies.CA.RDS")
+
 
 
 # scp /home/femeunier/Documents/projects/Drying.CB/scripts/Compile.all.outputs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

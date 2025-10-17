@@ -75,6 +75,22 @@ for (iproduct in seq(1,length(products))){
                      cproduct,"_GPP_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
+  time(anomalies$roll_mean_input) <- as.Date(anomalies$roll_times)
+  writeRaster(anomalies$roll_mean_input,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     cproduct,"_GPP_Rollmeaninput.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  writeRaster(anomalies$trend_z_anom,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     cproduct,"_GPP_trendsZanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  writeRaster(anomalies$trend_anom,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     cproduct,"_GPP_trendsanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
 }
 
 saveRDS(df.all,

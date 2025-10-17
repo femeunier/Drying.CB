@@ -70,6 +70,22 @@ for (ifile in seq(1,length(files))){
                      "Radar_",cvar,"_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
+  time(anomalies$roll_mean_input) <- as.Date(anomalies$roll_times)
+  writeRaster(anomalies$roll_mean_input,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     "Radar_",cvar,"_Rollmeaninput.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  writeRaster(anomalies$trend_z_anom,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     "Radar_",cvar,"_trendsZanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+  writeRaster(anomalies$trend_anom,
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
+                     "Radar_",cvar,"_trendsanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
 
 }
 
