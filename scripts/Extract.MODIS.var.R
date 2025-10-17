@@ -9,6 +9,9 @@ library(Drying.CB)
 vars <- c("NDVI",
           "EVI",
           "Pixel.Reliability")
+fac <- c(1/10000*1/10000,
+         1/10000*1/10000,
+         1)
 
 files <- list.files("/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/",
                     pattern = paste0(paste0(vars,".*all.years.tif$"),collapse = "|"),
@@ -35,7 +38,7 @@ for (ifile in seq(1,length(files))){
   dates <- time(cdata)
 
   cdata.msk <- crop(mask(cdata,Mask),
-                    ext(-25,65,-25,25))*0.0001/10000
+                    ext(-25,65,-25,25))*fac[ifile]
   cdata.msk <- project(cdata.msk,
                        "EPSG:4326")
 
@@ -61,20 +64,20 @@ for (ifile in seq(1,length(files))){
                                     detrend = FALSE)
 
   writeRaster(anomalies$trend,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      "MODIS_",cvar,"_trends.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   time(anomalies$anom) <- as.Date(dates)
   writeRaster(anomalies$anom,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      "MODIS_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$z_anom) <- as.Date(dates)
   writeRaster(anomalies$z_anom,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      "MODIS_",cvar,"_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 

@@ -74,20 +74,20 @@ for (ifile in seq(1,length(files))){
                                     detrend = FALSE)
 
   writeRaster(anomalies$trend,
-              paste0("./outputs/CMIP6.CA/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
                      cmodel,"_",cscenario,"_",cvar,"_trends.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   time(anomalies$anom) <- as.Date(dates)
   writeRaster(anomalies$anom,
-              paste0("./outputs/CMIP6.CA/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
                      cmodel,"_",cscenario,"_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$z_anom) <- as.Date(dates)
   writeRaster(anomalies$z_anom,
-              paste0("./outputs/CMIP6.CA/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
                      cmodel,"_",cscenario,"_",cvar,"_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 

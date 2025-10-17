@@ -57,21 +57,21 @@ for (iproduct in seq(1,length(products))){
                                     detrend = FALSE)
 
   writeRaster(anomalies$trend,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_GPP_trends.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$anom) <- as.Date(dates)
   writeRaster(anomalies$anom,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_GPP_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$z_anom) <- as.Date(dates)
   writeRaster(anomalies$z_anom,
-              paste0("./outputs/",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_GPP_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
