@@ -16,8 +16,8 @@ Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
 
-baseline_start <- as.Date("1961-01-01")
-baseline_end   <- as.Date("2014-12-31")
+baseline_start <- as.Date("2000-01-01")
+baseline_end   <- as.Date("2024-12-31")
 
 for (iproduct in seq(1,length(products))){
 
@@ -34,7 +34,7 @@ for (iproduct in seq(1,length(products))){
                   substr(names(cdata),6,7),"/01")
   time(cdata) <- as.Date(dates)
   cdata.msk <- crop(mask(cdata,Mask),
-                    ext(-25,65,-25,25))
+                    ext(-25,65,-25,25))*10
 
   ts <- global(cdata.msk,mean,na.rm = TRUE)
 
@@ -54,7 +54,7 @@ for (iproduct in seq(1,length(products))){
   anomalies <- anomalies_spatraster(input = cdata.msk,
                                     baseline_start = baseline_start,
                                     baseline_end   = baseline_end,
-                                    detrend = TRUE)
+                                    detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("./outputs/",
@@ -66,6 +66,13 @@ for (iproduct in seq(1,length(products))){
   writeRaster(anomalies$anom,
               paste0("./outputs/",
                      cproduct,"_GPP_anomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
+  time(anomalies$z_anom) <- as.Date(dates)
+  writeRaster(anomalies$z_anom,
+              paste0("./outputs/",
+                     cproduct,"_GPP_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 }

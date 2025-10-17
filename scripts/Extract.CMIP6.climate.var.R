@@ -9,16 +9,10 @@ library(Drying.CB)
 files <- list.files("/data/gent/vo/000/gvo00074/ED_common_data/met/Precip.Tropics/CMIP6/",
                     pattern = "*.tif$",
                     full.names = TRUE)
-# files <- files[grepl("E3SM-2-0",files) &
-#                  grepl("historical",files) &
-#                  grepl("pr",files)]
 
 Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
-
-baseline_start <- as.Date("1961-01-01")
-baseline_end   <- as.Date("2014-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -29,14 +23,14 @@ for (ifile in seq(1,length(files))){
   cvar <- strsplit(file.split[5], "_")[[1]][1]
 
   if (cscenario == "historical"){
-    baseline_start <- as.Date("1961-01-01")
+    baseline_start <- as.Date("2000-01-01")
     baseline_end   <- as.Date("2014-12-31")
   } else {
-    baseline_start <- as.Date("2015-01-01")
-    baseline_end   <- as.Date("2099-12-31")
+    baseline_start <- as.Date("2000-01-01")
+    baseline_end   <- as.Date("2024-12-31")
   }
 
-  print(paste0(cmodel,"-",cscenario,"-",cvar))
+  print(paste0(cmodel,"-",cscenario,"-",cvar,"-",ifile,"/",length(files)))
 
   cdata <- rast(cfile)
 
@@ -45,16 +39,6 @@ for (ifile in seq(1,length(files))){
   cdata.msk <- crop(mask(cdata,Mask),
                     ext(-25,65,-25,25))
 
-  pt <- vect(data.frame(x = -13.75, y = 9.75),
-             geom = c("x","y"), crs = "EPSG:4326")
-  pt_r <- project(pt, crs(cdata.msk))
-  vals <- extract(cdata.msk, pt_r, ID = FALSE)*86400*365.25/12
-
-  summary(lm(data = data.frame(time = dates,
-                       value = as.numeric(as.vector(vals))) %>%
-               filter(time >= baseline_start,
-                      time <= baseline_end),
-     formula = value ~ time))
 
   if (cvar == "pr"){
     cdata.msk <- cdata.msk*86400*365.25/12
@@ -75,6 +59,7 @@ for (ifile in seq(1,length(files))){
 
     cdf2save <- cdf2save %>%
       mutate(var = "pre")
+    cvar <- "pre"
 
   }
 
@@ -98,6 +83,14 @@ for (ifile in seq(1,length(files))){
               paste0("./outputs/CMIP6.CA/",
                      cmodel,"_",cscenario,"_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
+  time(anomalies$z_anom) <- as.Date(dates)
+  writeRaster(anomalies$z_anom,
+              paste0("./outputs/CMIP6.CA/",
+                     cmodel,"_",cscenario,"_",cvar,"_Zanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
 
 }
 

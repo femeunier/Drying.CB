@@ -60,7 +60,7 @@ for (ifile in seq(1,length(files))){
   anomalies <- anomalies_spatraster(input = cdata.msk,
                                     baseline_start = baseline_start,
                                     baseline_end   = baseline_end,
-                                    detrend = TRUE)
+                                    detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("./outputs/CMIP6.CA/",
@@ -69,11 +69,16 @@ for (ifile in seq(1,length(files))){
 
   time(anomalies$anom) <- as.Date(dates)
   writeRaster(anomalies$anom,
-              paste0("./outputs/CMIP6.CA/",
+              paste0("./outputs/",
                      "GLEAM_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
+  time(anomalies$z_anom) <- as.Date(dates)
+  writeRaster(anomalies$z_anom,
+              paste0("./outputs/",
+                     "GLEAM_",cvar,"_Zanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 }
 

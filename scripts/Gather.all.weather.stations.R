@@ -69,7 +69,18 @@ all.data <-
                             TRUE ~ tasmax))
 
 
+data.overview <- all.data %>%
+  dplyr::select(-dewpoint) %>%
+  pivot_longer(cols = c(tas,tasmin,tasmax,pre),
+               names_to = "var") %>%
+  filter(!is.na(value)) %>%
+  left_join(all.metadata %>%
+              dplyr::select(station_id,source,lon,lat) %>%
+              distinct() ,
+            by = c("station_id","source"))
 
+saveRDS(data.overview,
+        "./outputs/Weather.overview.RDS")
 
 # Got it — the safest way to “remove likely duplicates but keep all data” is to (1) cluster station metadata that refer to the same physical site (by distance + elevation tolerance, and guarding against same station_id used for different places), then (2) attach a stable unified_id to every row of your time-series table via a crosswalk instead of dropping anything.
 # Here’s a ready-to-use R function that does exactly that. It:

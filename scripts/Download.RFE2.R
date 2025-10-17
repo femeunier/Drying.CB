@@ -8,6 +8,11 @@ library(rvest)
 library(xml2)
 library(lubridate)
 library(dplyr)
+library(sf)
+
+A <- read_sf("/home/femeunier/Downloads/africa_rfe.20010101.shp/africa_rfe.20010101.shp")
+
+plot(A)
 
 # rfe2_monthly_sum <- function(
 #     base_url   = "https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/rfe2/geotiff/",

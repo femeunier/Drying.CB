@@ -15,8 +15,8 @@ Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
 
-baseline_start <- as.Date("1961-01-01")
-baseline_end   <- as.Date("2014-12-31")
+baseline_start <- as.Date("2000-01-01")
+baseline_end   <- as.Date("2024-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -27,7 +27,7 @@ for (ifile in seq(1,length(files))){
 
   if (!(cvar %in% c("tas","pre","tasmin","tasmax"))) next()
 
-  print(paste0(cproduct,"-",cvar))
+  print(paste0(cproduct,"-",cvar,"-",ifile,"/",length(files)))
 
   cdata <- rast(cfile)
   cdata.msk <- crop(mask(cdata,Mask),
@@ -70,10 +70,18 @@ for (ifile in seq(1,length(files))){
                      cproduct,"_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
+
+  time(anomalies$z_anom) <- time(cdata)
+  writeRaster(anomalies$z_anom,
+              paste0("./outputs/climate.vars/",
+                     cproduct,"_",cvar,"_Zanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
 }
 
 saveRDS(df.all,
         "./outputs/All.climatevars.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.allclimate.vars.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.allclimate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

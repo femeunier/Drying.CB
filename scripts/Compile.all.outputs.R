@@ -87,26 +87,33 @@ for (ifile in seq(1,length(All.trends.files))){
   }
 
   cr <- rast(cfile)
+  cintercept <- cr[[1]]
   cslope <- cr[[2]]
 
   cslope.df <- as.data.frame(cslope,xy = TRUE) %>%
     dplyr::rename(lon = x,
                   lat = y)
 
+  cintercept.df <- as.data.frame(cintercept,xy = TRUE) %>%
+    dplyr::rename(lon = x,
+                  lat = y)
+
+
   all.slopes <- bind_rows(
     all.slopes,
     cslope.df %>%
+      left_join(cintercept.df,
+                by = c("lon","lat")) %>%
       mutate(model = cmodel,
              period = cperiod,
              var = cvar,
-             type = ctype))
+             type = ctype,
+             rel_slope = slope_per_year/abs(intercept_t0)))
 
 }
 
 saveRDS(all.slopes,
         "./outputs/All.slopes.CA.RDS")
-
-
 
 ###################################################################
 
@@ -164,6 +171,64 @@ for (ifile in seq(1,length(All.anomalies.files))){
 
 saveRDS(all.anomalies,
         "./outputs/All.anomalies.CA.RDS")
+
+
+###################################################################
+
+All.Zanomalies.files <-
+  c(list.files("./outputs/",
+               "*_Zanomalies.tif",
+               full.names = TRUE),
+    list.files("./outputs/climate.vars/",
+               "*_Zanomalies.tif",
+               full.names = TRUE))
+
+all.Zanomalies <- data.frame()
+for (ifile in seq(1,length(All.Zanomalies.files))){
+
+  cfile <- All.Zanomalies.files[ifile]
+
+  print(cfile)
+
+  csplit <- strsplit(tools::file_path_sans_ext(
+    basename(cfile)),"\\_")[[1]]
+
+  if (length(csplit) == 3){
+    cmodel <- csplit[1]
+    cvar <- csplit[2]
+    cperiod <- "historical"
+    ctype <- "Observational"
+  } else {
+    cmodel <- csplit[1]
+    cperiod <- csplit[2]
+    cvar <- csplit[3]
+    ctype <- "CMIP6"
+  }
+
+  cr <- rast(cfile)
+  pos <- which(year(time(cr)) == 2024)
+
+  if (length(pos) == 0) next()
+
+  canomalies <- mean(cr[[pos]],
+                     na.rm = TRUE)
+
+  canomalies.df <- as.data.frame(canomalies,xy = TRUE) %>%
+    dplyr::rename(lon = x,
+                  lat = y)
+
+  all.Zanomalies <- bind_rows(
+    all.Zanomalies,
+    canomalies.df %>%
+      mutate(model = cmodel,
+             period = cperiod,
+             var = cvar,
+             type = ctype))
+
+}
+
+saveRDS(all.Zanomalies,
+        "./outputs/All.Zanomalies.CA.RDS")
 
 
 # scp /home/femeunier/Documents/projects/Drying.CB/scripts/Compile.all.outputs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

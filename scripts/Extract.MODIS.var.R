@@ -18,8 +18,8 @@ Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
 
-baseline_start <- as.Date("1961-01-01")
-baseline_end   <- as.Date("2014-12-31")
+baseline_start <- as.Date("2000-01-01")
+baseline_end   <- as.Date("2024-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -35,7 +35,7 @@ for (ifile in seq(1,length(files))){
   dates <- time(cdata)
 
   cdata.msk <- crop(mask(cdata,Mask),
-                    ext(-25,65,-25,25))
+                    ext(-25,65,-25,25))*0.0001/10000
   cdata.msk <- project(cdata.msk,
                        "EPSG:4326")
 
@@ -58,7 +58,7 @@ for (ifile in seq(1,length(files))){
   anomalies <- anomalies_spatraster(input = cdata.msk,
                                     baseline_start = baseline_start,
                                     baseline_end   = baseline_end,
-                                    detrend = TRUE)
+                                    detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("./outputs/",
@@ -70,6 +70,14 @@ for (ifile in seq(1,length(files))){
               paste0("./outputs/",
                      "MODIS_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
+
+  time(anomalies$z_anom) <- as.Date(dates)
+  writeRaster(anomalies$z_anom,
+              paste0("./outputs/",
+                     "MODIS_",cvar,"_Zanomalies.tif"),
+              overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
+
 
 
 }
