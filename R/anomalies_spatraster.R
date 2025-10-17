@@ -13,7 +13,8 @@ anomalies_spatraster <- function(input,
   get_year  <- function(d) as.POSIXlt(d)$year + 1900L
   get_month <- function(d) as.POSIXlt(d)$mon  + 1L
 
-  if (!exists("trend_fit", mode = "function")) {
+  if (!exists("trend_fit",
+              mode = "function")) {
     trend_fit <- function(v, tn, t0) {
       if (all(!is.finite(v))) return(c(NA_real_, NA_real_))
       ok <- is.finite(v) & is.finite(tn)
@@ -30,6 +31,7 @@ anomalies_spatraster <- function(input,
     if (k < 1L || k > n) return(list())
     lapply(seq_len(n - k + 1L), function(i) i:(i + k - 1L))
   }
+
   roll_times <- function(tt, k, align=c("right","center","left")) {
     align <- match.arg(align)
     n <- length(tt); if (k < 1L || k > n) return(as.Date(character()))
@@ -97,51 +99,57 @@ anomalies_spatraster <- function(input,
   trend_anom <- app(anom,  fun = trend_fit, tn = tn, t0 = mean(tn, na.rm = TRUE))
   names(trend_anom) <- c("anom_intercept_t0", "anom_slope_per_year")
 
-
   trend_z_anom <- app(z_anom, fun = trend_fit, tn = tn, t0 = mean(tn, na.rm = TRUE))
   names(trend_z_anom) <- c("z_anom_intercept_t0", "z_anom_slope_per_year")
 
-  # --- rolling means & their trends ---
-  roll_idx_list <- build_roll_indices(nlay, roll_window, roll_align)
-  tt_roll <- roll_times(tt, roll_window, roll_align)
-  tn_roll <- get_year(tt_roll) + (get_month(tt_roll) - 0.5)/12
+  # # --- rolling means & their trends ---
+  # roll_idx_list <- build_roll_indices(nlay, roll_window, roll_align)
+  # tt_roll <- roll_times(tt, roll_window, roll_align)
+  # tn_roll <- get_year(tt_roll) + (get_month(tt_roll) - 0.5)/12
+  #
+  # if (length(roll_idx_list)) {
+  #   roll_mean_input <- tapp(input, index = roll_idx_list, fun = function(x) {
+  #     ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
+  #   })
+  #   names(roll_mean_input) <- paste0("rollmean_", format(tt_roll, "%Y-%m"))
+  #
+  #   roll_mean_anom <- tapp(anom, index = roll_idx_list, fun = function(x) {
+  #     ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
+  #   })
+  #   names(roll_mean_anom) <- paste0("rollmean_anom_", format(tt_roll, "%Y-%m"))
+  #
+  #   roll_mean_z_anom <- tapp(z_anom, index = roll_idx_list, fun = function(x) {
+  #     ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
+  #   })
+  #   names(roll_mean_z_anom) <- paste0("rollmean_z_anom_", format(tt_roll, "%Y-%m"))
+  #
+  #   # trends on rolling means
+  #   trend_roll_input <- app(roll_mean_input, fun = trend_fit,
+  #                           tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
+  #   names(trend_roll_input) <- c("roll_input_intercept_t0", "roll_input_slope_per_year")
+  #
+  #   trend_roll_anom <- app(roll_mean_anom, fun = trend_fit,
+  #                          tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
+  #   names(trend_roll_anom) <- c("roll_anom_intercept_t0", "roll_anom_slope_per_year")
+  #
+  #   trend_roll_z_anom <- app(roll_mean_z_anom, fun = trend_fit,
+  #                            tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
+  #   names(trend_roll_z_anom) <- c("roll_z_anom_intercept_t0", "roll_z_anom_slope_per_year")
+  # } else {
+  #   roll_mean_input  <- NULL
+  #   roll_mean_anom   <- NULL
+  #   trend_roll_input <- NULL
+  #   trend_roll_anom  <- NULL
+  #   roll_mean_z_anom <- NULL
+  #   trend_roll_z_anom <- NULL
+  # }
 
-  if (length(roll_idx_list)) {
-    roll_mean_input <- tapp(input, index = roll_idx_list, fun = function(x) {
-      ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
-    })
-    names(roll_mean_input) <- paste0("rollmean_", format(tt_roll, "%Y-%m"))
-
-    roll_mean_anom <- tapp(anom, index = roll_idx_list, fun = function(x) {
-      ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
-    })
-    names(roll_mean_anom) <- paste0("rollmean_anom_", format(tt_roll, "%Y-%m"))
-
-    roll_mean_z_anom <- tapp(z_anom, index = roll_idx_list, fun = function(x) {
-      ok <- is.finite(x); if (sum(ok) < roll_min_obs) return(NA_real_); mean(x[ok])
-    })
-    names(roll_mean_z_anom) <- paste0("rollmean_z_anom_", format(tt_roll, "%Y-%m"))
-
-    # trends on rolling means
-    trend_roll_input <- app(roll_mean_input, fun = trend_fit,
-                            tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
-    names(trend_roll_input) <- c("roll_input_intercept_t0", "roll_input_slope_per_year")
-
-    trend_roll_anom <- app(roll_mean_anom, fun = trend_fit,
-                           tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
-    names(trend_roll_anom) <- c("roll_anom_intercept_t0", "roll_anom_slope_per_year")
-
-    trend_roll_z_anom <- app(roll_mean_z_anom, fun = trend_fit,
-                             tn = tn_roll, t0 = mean(tn_roll, na.rm = TRUE))
-    names(trend_roll_z_anom) <- c("roll_z_anom_intercept_t0", "roll_z_anom_slope_per_year")
-  } else {
     roll_mean_input  <- NULL
     roll_mean_anom   <- NULL
     trend_roll_input <- NULL
     trend_roll_anom  <- NULL
     roll_mean_z_anom <- NULL
     trend_roll_z_anom <- NULL
-  }
 
   # warn if baseline misses months
   missing_months <- month.abb[!(1:12 %in% present)]
