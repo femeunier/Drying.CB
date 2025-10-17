@@ -103,9 +103,9 @@ anomalies_spatraster <- function(input,
   names(trend_z_anom) <- c("z_anom_intercept_t0", "z_anom_slope_per_year")
 
   # # --- rolling means & their trends ---
-  roll_idx_list <- build_roll_indices(nlay, roll_window, roll_align)
-  tt_roll <- roll_times(tt, roll_window, roll_align)
-  tn_roll <- get_year(tt_roll) + (get_month(tt_roll) - 0.5)/12
+  # roll_idx_list <- build_roll_indices(nlay, roll_window, roll_align)
+  # tt_roll <- roll_times(tt, roll_window, roll_align)
+  # tn_roll <- get_year(tt_roll) + (get_month(tt_roll) - 0.5)/12
   #
   # if (length(roll_idx_list)) {
   #   roll_mean_input <- tapp(input, index = roll_idx_list, fun = function(x) {
