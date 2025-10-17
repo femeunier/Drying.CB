@@ -1,7 +1,4 @@
-# Works without terra::trend(); uses closed-form OLS with raster algebra.
-# Requires: library(terra)
-
-anomalies_spatraster <- function(input,
+anomalies_spatraster_fast <- function(input,
                                  baseline_start = as.Date("1981-01-01"),
                                  baseline_end   = as.Date("2010-12-31"),
                                  detrend = FALSE,
