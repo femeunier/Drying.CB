@@ -15,8 +15,8 @@ Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
 
-baseline_start <- as.Date("2000-01-01")
-baseline_end   <- as.Date("2024-12-31")
+baseline_start <- as.Date("1985-01-01")
+baseline_end   <- as.Date("2014-12-31")
 
 for (ifile in seq(1,length(files))){
 
@@ -47,6 +47,8 @@ for (ifile in seq(1,length(files))){
       (mean(cdf2save$value,na.rm = TRUE) > 200)){
     cdf2save <- cdf2save %>%
       mutate(value = value - 273.15)
+    cdata.msk <- (cdata.msk - 273.15)
+    print("-- Here")
   }
 
   df.all <- bind_rows(df.all,
@@ -54,10 +56,10 @@ for (ifile in seq(1,length(files))){
 
   ##########################################################
   # Anomalies
-  anomalies <- anomalies_spatraster(input = cdata.msk,
-                                    baseline_start = baseline_start,
-                                    baseline_end   = baseline_end,
-                                    detrend = FALSE)
+  anomalies <- anomalies_spatraster_roll(input = cdata.msk,
+                                         baseline_start = baseline_start,
+                                         baseline_end   = baseline_end,
+                                         detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
@@ -66,31 +68,31 @@ for (ifile in seq(1,length(files))){
 
   time(anomalies$anom) <- time(cdata)
   writeRaster(anomalies$anom,
-              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_",cvar,"_anomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$z_anom) <- time(cdata)
   writeRaster(anomalies$z_anom,
-              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_",cvar,"_Zanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   time(anomalies$roll_mean_input) <- as.Date(anomalies$roll_times)
   writeRaster(anomalies$roll_mean_input,
-              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_",cvar,"_Rollmeaninput.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   writeRaster(anomalies$trend_anom,
-              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_",cvar,"_trendsanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   writeRaster(anomalies$trend_z_anom,
-              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB",
+              paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                      cproduct,"_",cvar,"_trendsZanomalies.tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 

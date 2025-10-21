@@ -51,10 +51,10 @@ for (iproduct in seq(1,length(products))){
 
   ##########################################################
   # Anomalies
-  anomalies <- anomalies_spatraster(input = cdata.msk,
-                                    baseline_start = baseline_start,
-                                    baseline_end   = baseline_end,
-                                    detrend = FALSE)
+  anomalies <- anomalies_spatraster_roll(input = cdata.msk,
+                                         baseline_start = baseline_start,
+                                         baseline_end   = baseline_end,
+                                         detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",

@@ -57,7 +57,7 @@ for (ifile in seq(1,length(files))){
 
   ##########################################################
   # Anomalies
-  anomalies <- anomalies_spatraster_fast(input = cdata.msk,
+  anomalies <- anomalies_spatraster_roll(input = cdata.msk,
                                          baseline_start = baseline_start,
                                          baseline_end   = baseline_end,
                                          detrend = FALSE)

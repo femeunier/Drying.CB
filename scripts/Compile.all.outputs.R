@@ -228,9 +228,6 @@ saveRDS(all.Zanomalies,
 All.trendsanomalies.files <-
   c(list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                "*_trendsanomalies.tif",
-               full.names = TRUE),
-    list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
-               "*_trendsanomalies.tif",
                full.names = TRUE))
 
 all.slopes.anomalies <- data.frame()
@@ -283,9 +280,6 @@ saveRDS(all.slopes.anomalies,
 All.trendsZanomalies.files <-
   c(list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
                "*_trendsZanomalies.tif",
-               full.names = TRUE),
-    list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
-               "*_trendsZanomalies.tif",
                full.names = TRUE))
 
 all.slopes.Zanomalies <- data.frame()
@@ -331,8 +325,6 @@ for (ifile in seq(1,length(All.trendsZanomalies.files))){
 
 saveRDS(all.slopes.Zanomalies,
         "./outputs/All.slopesZanomalies.CA.RDS")
-
-
 
 # scp /home/femeunier/Documents/projects/Drying.CB/scripts/Compile.all.outputs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 

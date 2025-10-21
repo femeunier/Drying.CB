@@ -8,7 +8,7 @@ library(Drying.CB)
 
 files <- list.files("./data/GRACE/",
                     pattern = "*.tif$",
-                    full.names = TRUE)[c(1,3,4)]
+                    full.names = TRUE)
 
 Mask <- read_sf("./data/Rainforests.shp")
 
@@ -50,10 +50,10 @@ for (ifile in seq(1,length(files))){
 
   ##########################################################
   # Anomalies
-  anomalies <- anomalies_spatraster(input = cdata.msk,
-                                    baseline_start = baseline_start,
-                                    baseline_end   = baseline_end,
-                                    detrend = FALSE)
+  anomalies <- anomalies_spatraster_roll(input = cdata.msk,
+                                         baseline_start = baseline_start,
+                                         baseline_end   = baseline_end,
+                                         detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",

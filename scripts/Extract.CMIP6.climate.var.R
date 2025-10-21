@@ -10,6 +10,8 @@ files <- list.files("/data/gent/vo/000/gvo00074/ED_common_data/met/Precip.Tropic
                     pattern = "*.tif$",
                     full.names = TRUE)
 
+vars2include <- c("pr","tas")
+
 Mask <- read_sf("./data/Rainforests.shp")
 
 df.all <- data.frame()
@@ -22,8 +24,12 @@ for (ifile in seq(1,length(files))){
   cscenario <- file.split[4]
   cvar <- strsplit(file.split[5], "_")[[1]][1]
 
+  if (!(cvar %in% c(vars2include))){
+    next()
+  }
+
   if (cscenario == "historical"){
-    baseline_start <- as.Date("2000-01-01")
+    baseline_start <- as.Date("1985-01-01")
     baseline_end   <- as.Date("2014-12-31")
   } else {
     baseline_start <- as.Date("2000-01-01")
@@ -68,10 +74,10 @@ for (ifile in seq(1,length(files))){
 
   ##########################################################
   # Anomalies
-  anomalies <- anomalies_spatraster(input = cdata.msk,
-                                    baseline_start = baseline_start,
-                                    baseline_end   = baseline_end,
-                                    detrend = FALSE)
+  anomalies <- anomalies_spatraster_roll(input = cdata.msk,
+                                         baseline_start = baseline_start,
+                                         baseline_end   = baseline_end,
+                                         detrend = FALSE)
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/CMIP6/",
