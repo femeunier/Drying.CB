@@ -3,6 +3,8 @@ rm(list = ls())
 library(dplyr)
 library(terra)
 library(lubridate)
+library(tidyr)
+library(stringr)
 
 files <- c("./outputs/All.climatevars.CA.RDS",
            "./outputs/All.CMIP6.vars.CA.RDS",
@@ -143,16 +145,29 @@ for (ifile in seq(1,length(All.anomalies.files))){
   }
 
   cr <- rast(cfile)
-  pos <- which(year(time(cr)) == 2024)
+  pos <- which(year(time(cr)) %in% c(2023,2024))
 
   if (length(pos) == 0) next()
 
-  canomalies <- mean(cr[[pos]],
-                     na.rm = TRUE)
+  ccr <- cr[[pos]]
+  dates <- time(ccr)
+  years <- format(dates, "%Y")
+  months <- as.numeric(format(dates, "%m"))
+  trimesters <- (months - 1) %/% 3 + 1
+  groups <- paste0(years, "_T", trimesters)
+
+  canomalies <- tapp(ccr, groups, mean, na.rm = TRUE)
 
   canomalies.df <- as.data.frame(canomalies,xy = TRUE) %>%
     dplyr::rename(lon = x,
-                  lat = y)
+                  lat = y) %>%
+    pivot_longer(cols = -c(lon,lat),
+                 names_to = "name",
+                 values_to = "value") %>%
+    mutate(
+      year = as.numeric(str_extract(name, "\\d{4}")),
+      trimester = as.numeric(str_extract(name, "(?<=T)\\d"))) %>%
+    dplyr::select(-name)
 
   all.anomalies <- bind_rows(
     all.anomalies,
@@ -167,6 +182,7 @@ for (ifile in seq(1,length(All.anomalies.files))){
 saveRDS(all.anomalies,
         "./outputs/All.anomalies.CA.RDS")
 
+stop()
 
 ###################################################################
 
@@ -326,5 +342,5 @@ for (ifile in seq(1,length(All.trendsZanomalies.files))){
 saveRDS(all.slopes.Zanomalies,
         "./outputs/All.slopesZanomalies.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Compile.all.outputs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Compile.all.outputs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 

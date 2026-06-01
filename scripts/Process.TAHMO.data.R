@@ -81,6 +81,24 @@ all.data.sum <- all.data %>%
                                 TRUE ~ FALSE),
             .groups = "keep")
 
+MAT <- all.data.sum %>%
+  filter(var == "temperature", type == "AVG") %>%
+  group_by(station, year) %>%
+  summarise(MAT = mean(value.m, na.rm = TRUE), .groups = "drop")
+
+# Mean Annual Precipitation (MAP)
+MAP <- all.data.sum %>%
+  filter(var == "precipitation") %>%
+  group_by(station, year) %>%
+  summarise(MAP = sum(value.m, na.rm = TRUE), .groups = "drop")
+
+# Combine both
+clim <- MAT %>%
+  left_join(MAP, by = c("station", "year"))
+
+
+all.data.sum
+
 
 data <- all.data.sum %>%
   ungroup() %>%
@@ -149,4 +167,22 @@ ggplot(data = all.data.sum.anomaly.m,
   facet_wrap(~interaction(var,type),
              scales = "free") +
   theme_bw()
+
+
+ggplot(data = all.data.sum.anomaly.m %>%
+         filter(var == "temperature",
+                type == "AVG"),
+       aes(x = year + (month - 1/2)/12,
+           y = anomaly.m)) +
+  labs(x = "", y = "Temperature anomaly") +
+  geom_rect(inherit.aes = FALSE,
+            aes(xmin = 2024, xmax = 2025,
+                ymin = -Inf, ymax = Inf),
+            fill = "grey",color = NA) +
+  geom_hline(yintercept = 0,linetype = 2) +
+  geom_line() +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+
 

@@ -159,7 +159,7 @@ for (cyear in years){
                            day = cdays[ifile]) %>%
                     rename(Qair = value),
                   by = c("lon","lat","year","month","day")) %>%
-        mutate(vpd = vpd_from_T_q(value,Qair,101.325))
+        mutate(vpd = vpd_from_T_q(value -273.15,Qair,101.325))
 
       nc_close(nc)
 
@@ -184,6 +184,7 @@ for (cyear in years){
                             na.rm = TRUE),
               tas.m = mean(value,
                            na.rm = TRUE),
+              vpd.m = mean(vpd,na.rm = TRUE),
               N = n(),
               .groups = "keep") %>%
     group_by(lon,lat,year,month) %>%
@@ -193,6 +194,8 @@ for (cyear in years){
                             na.rm = TRUE),
               N = sum(N),
               tas = mean(tas.m,
+                         na.rm = TRUE),
+              vpd = mean(vpd.m,
                          na.rm = TRUE),
               .groups = "keep")
 

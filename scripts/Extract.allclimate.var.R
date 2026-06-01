@@ -12,11 +12,21 @@ files <- list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/all.climate",
 files <- files[!grepl("CRUJRA_",files)]
 
 Mask <- read_sf("./data/Rainforests.shp")
+Mask <- vect(st_as_sfc(
+  st_bbox(c(
+    xmin = -20,
+    ymin = -15,
+    xmax = 55,
+    ymax = 15),
+  crs = 4326)
+))
 
 df.all <- data.frame()
 
 baseline_start <- as.Date("1985-01-01")
 baseline_end   <- as.Date("2014-12-31")
+
+suffix <- "CA"
 
 for (ifile in seq(1,length(files))){
 
@@ -31,7 +41,7 @@ for (ifile in seq(1,length(files))){
 
   cdata <- rast(cfile)
   cdata.msk <- crop(mask(cdata,Mask),
-                    ext(-25,65,-25,25))
+                    ext(Mask))
 
   ts <- global(cdata.msk,mean,na.rm = TRUE)
 
@@ -63,44 +73,44 @@ for (ifile in seq(1,length(files))){
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_trends.tif"),
+                     cproduct,"_",cvar,"_trends_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   time(anomalies$anom) <- time(cdata)
   writeRaster(anomalies$anom,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_anomalies.tif"),
+                     cproduct,"_",cvar,"_anomalies_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   time(anomalies$z_anom) <- time(cdata)
   writeRaster(anomalies$z_anom,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_Zanomalies.tif"),
+                     cproduct,"_",cvar,"_Zanomalies_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   time(anomalies$roll_mean_input) <- as.Date(anomalies$roll_times)
   writeRaster(anomalies$roll_mean_input,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_Rollmeaninput.tif"),
+                     cproduct,"_",cvar,"_Rollmeaninput_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
   writeRaster(anomalies$trend_anom,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_trendsanomalies.tif"),
+                     cproduct,"_",cvar,"_trendsanomalies_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
   writeRaster(anomalies$trend_z_anom,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
-                     cproduct,"_",cvar,"_trendsZanomalies.tif"),
+                     cproduct,"_",cvar,"_trendsZanomalies_",suffix,".tif"),
               overwrite=TRUE, gdal=c("COMPRESS=NONE", "TFW=YES"))
 
 
 }
 
 saveRDS(df.all,
-        "./outputs/All.climatevars.CA.RDS")
+        paste0("./outputs/All.climatevars.",suffix,".RDS"))
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.allclimate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Extract.allclimate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

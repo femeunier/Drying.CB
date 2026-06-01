@@ -9,6 +9,7 @@ library(Drying.CB)
 files <- list.files("/data/gent/vo/000/gvo00074/ED_common_data/met/Precip.Tropics/CMIP6/",
                     pattern = "*.tif$",
                     full.names = TRUE)
+# files <- files[grepl("KACE",files)]
 
 vars2include <- c("pr","tas")
 
@@ -32,7 +33,7 @@ for (ifile in seq(1,length(files))){
     baseline_start <- as.Date("1985-01-01")
     baseline_end   <- as.Date("2014-12-31")
   } else {
-    baseline_start <- as.Date("2000-01-01")
+    baseline_start <- as.Date("1985-01-01")
     baseline_end   <- as.Date("2024-12-31")
   }
 
@@ -44,7 +45,6 @@ for (ifile in seq(1,length(files))){
 
   cdata.msk <- crop(mask(cdata,Mask),
                     ext(-25,65,-25,25))
-
 
   if (cvar == "pr"){
     cdata.msk <- cdata.msk*86400*365.25/12
@@ -119,5 +119,5 @@ for (ifile in seq(1,length(files))){
 saveRDS(df.all,
         "./outputs/All.CMIP6.vars.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.CMIP6.climate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Extract.CMIP6.climate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

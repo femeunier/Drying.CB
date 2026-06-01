@@ -12,11 +12,11 @@ library(terra)
 
 
 files <- list.files("./outputs/",
-                    pattern = "*.climate.rspld.RDS",
+                    pattern = "*.climate.RDS",
                     full.names = TRUE)
 files <- files[grepl("3IMERG|Berk|CAMS|chirps|chirpsv3|CRU|CRUJRA3Q|ERA5|GLDAS|GPCC|MSWEP|NCEP",
                      files)]
-files <- files[grepl("GLDAS|NCEP",
+files <- files[grepl("3IMERG",
                      files)]
 
 
@@ -35,8 +35,10 @@ for (ifile in seq(1,length(files))){
     next()
   }
 
-  cdf <- readRDS(files[ifile])
+  cdf <- readRDS(files[ifile]) %>%
+    rename(pre = MAP)
   cn <- colnames(cdf)
+
   cn2keep <- cn[!(cn %in% c("year","month","lon","lat"))]
 
   times <- cdf %>%
@@ -55,7 +57,9 @@ for (ifile in seq(1,length(files))){
 
       ccdf <- cdf %>%
         filter(year == cyear,
-               month == cmonth)
+               month == cmonth) %>%
+        mutate(lat = round(lat,digits = 2),
+               lon = round(lon,digits = 2))
 
       crast[[itime]] <- rast(rasterFromXYZ(ccdf %>%
                                         dplyr::select(lon,lat,!!cvar)))

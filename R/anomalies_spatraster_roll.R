@@ -4,7 +4,8 @@ anomalies_spatraster_roll <- function(input,
                                  detrend = FALSE,
                                  roll_window  = 12L,
                                  roll_align   = c("right","center","left"),
-                                 roll_min_obs = NULL) {
+                                 roll_min_obs = NULL,
+                                 SD_threshold = 0.001) {
 
   roll_align <- match.arg(roll_align)
   if (is.null(roll_min_obs)) roll_min_obs <- ceiling(roll_window/2)
@@ -77,6 +78,12 @@ anomalies_spatraster_roll <- function(input,
   }
   clim12 <- make_full12(clim_idx)
   sd12   <- make_full12(sd_idx)
+
+  vals <- values(sd12)
+  sd_floor <- quantile(vals[vals > 0], SD_threshold, na.rm = TRUE)
+  sd12[sd12 < sd_floor] <- NA
+
+
 
   # --- anomalies & z-anomalies ---
   clim_expanded <- clim12[[m_all]]

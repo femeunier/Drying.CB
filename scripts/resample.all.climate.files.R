@@ -19,7 +19,7 @@ files <- list.files("./outputs/",
                     full.names = TRUE)
 files <- files[grepl("3IMERG|Berk|CAMS|chirps|chirpsv3|CRU|CRUJRA3Q|ERA5|GLDAS|GPCC|MSWEP|NCEP",
                      files)]
-files <- files[grepl("NCEP|GLDAS",
+files <- files[grepl("3IMERG",
                      files)]
 
 
@@ -65,7 +65,7 @@ for (ifile in seq(1,length(files))){
                                         filter(year == cyear),
                                      raster2resample = craster,
                                      var.names = cn[which(cn %in% c('pre',"tas","tasmax","tasmin"))],
-                                     res = NULL,
+                                     res = 0.000152602,
                                      verbose = FALSE)
     cdf.rspld <- bind_rows(cdf.rspld,
                            ccdf.rspld)

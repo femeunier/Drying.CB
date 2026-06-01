@@ -10,6 +10,18 @@ init.years <- seq(2000,2024,1)
 
 WD <- "/data/gent/vo/000/gvo00074/ED_common_data/met/GLDAS"
 
+tas.files <- list.files("/data/gent/vo/000/gvo00074/ED_common_data/met/GLDAS/daily/",
+                        pattern = "*.RDS",
+                        full.names = TRUE)
+
+df.others <- data.frame()
+for (cfile in tas.files){
+
+  df.others <- bind_rows(df.others,
+                         readRDS(cfile))
+}
+
+
 df.CRU <- data.frame()
 
 
@@ -66,7 +78,12 @@ for (iyear in seq(1,length(init.years))){
   }
 }
 
-saveRDS(df.CRU,"./outputs/df.GLDAS.Tropics.RDS")
+df.CRU <- df.CRU %>%
+  left_join(df.others %>%
+              dplyr::select(-c(any_of("N"))),
+            by = c("lon","lat","year","month"))
+
+saveRDS(df.CRU,"./outputs/df.GLDAS.Tropics.climate.RDS")
 
 # scp /home/femeunier/Documents/projects/YGB/scripts/summarise.precip.GLDAS.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R
 

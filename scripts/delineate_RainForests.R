@@ -8,7 +8,7 @@ library(terra)
 library(tidyr)
 library(sf)
 
-LC <- readRDS("/home/femeunier/Documents/projects/Congo.vs.Amazon/data/LC_Congo.RDS") %>%
+LC <- readRDS("/Users/felicien/Documents/projects/Congo.vs.Amazon/data/LC_Congo.RDS") %>%
   mutate(lon = round(lon,2),
          lat = round(lat,2))
 

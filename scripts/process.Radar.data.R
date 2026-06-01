@@ -157,7 +157,7 @@ for (itime in seq(1,nrow(times))){
 crast <- rast(all.rast)
 time(crast) <- dates
 
-plot(crast[[392]])
+plot(crast[[393]])
 
 writeRaster(crast,
             paste0("./outputs/","Radar_all.years.tif"),

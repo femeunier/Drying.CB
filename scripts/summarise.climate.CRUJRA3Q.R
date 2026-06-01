@@ -13,7 +13,8 @@ library(Drying.CB)
 
 years <- 1901:2024
 
-vars <- c("pre","tmp","tmin","tmax","spfh")
+vars <- c("pre","tmp","tmin","tmax","pres","spfh")
+#vars <- c("tmp","pres",'spfh')
 # vars <- c("pre")
 
 # dir <- "/home/femeunier/Documents/projects/TrENDY.analyses/data"
@@ -36,9 +37,6 @@ for (cyear in years){
 
   print(paste0(cyear))
   cyr.df <- data.frame()
-
-  temp.array <- array(data = NA,
-                      dim = c(720,360,1460,length(vars)))
 
   ivar = 1
   for (cvar in vars){
@@ -69,9 +67,14 @@ for (cyear in years){
 
     nc <- nc_open(nc.file)
     lats <- ncvar_get(nc,"lat")
+    pos.lats <- which(abs(lats) <= 30)
+    act.lats <- lats[pos.lats]
+
     lons <- ncvar_get(nc,"lon")
 
-    data <- ncvar_get(nc,cvar)
+    data <- ncvar_get(nc,cvar,
+                      start = c(1,min(pos.lats),1),
+                      count = c(-1,length(pos.lats),-1))
 
     ivar <- ivar + 1
 
@@ -85,14 +88,14 @@ for (cyear in years){
 
   # Construct result date by adding years and days manually
 
-
    cdf <- melt(data) %>%
-      filter(!is.na(value)) %>% ungroup() %>%
+      filter(!is.na(value)) %>%
+      ungroup() %>%
       rename(lon = Var1,
              lat = Var2,
              time = Var3) %>%
       mutate(lon = lons[lon],
-             lat = lats[lat],
+             lat = act.lats[lat],
              time = dates[time]) %>%
       mutate(month = month(time),
              day = day(time))
@@ -110,38 +113,41 @@ for (cyear in years){
         group_by(lon,lat,month,day) %>%
         summarise(value = max(value,na.rm = TRUE),.groups = "keep")
 
-
    }
 
 
    if (cvar == "tmp"){
      df2keep <- cdf
+   } else if (cvar == 'pres') {
+     df2keep2 <- cdf
    }
 
    if (cvar == "spfh"){
-     cdf <- cdf %>%
-       left_join(df2keep %>%
-                   rename(spfh = value),
-                 by = c("lon","lat","month","day","time")) %>%
-       mutate(vpd = vpd_from_T_q(value,spfh,101.325)) %>%
-       ungroup() %>%
-       mutate(value = vpd)
-       dplyr::select(-c("spfh","vpd"))
 
-       cdf.monthly <- cdf %>%
-         group_by(lon,lat,month) %>%
-         summarise(value = mean(value,na.rm = TRUE),.groups = "keep") %>%
-         ungroup() %>%
-         rename(vpd = value) %>%
-         filter(abs(lat) < 30)
+     cdf[["tmp"]] <- df2keep[["value"]]
+     cdf[["pres"]] <- df2keep2[["value"]]
+
+     cdf <- cdf %>%
+       mutate(vpd = vpd_from_T_q(tmp -273.15,value,pres/1000)) %>%
+       ungroup() %>%
+       dplyr::select(-c("tmp","pres"))
+
+     cdf.monthly <- cdf %>%
+       group_by(lon,lat,month) %>%
+       summarise(vpd = mean(vpd,na.rm = TRUE),
+                 spfh = mean(value,na.rm = TRUE),
+                 .groups = "keep") %>%
+       ungroup() %>%
+       filter(abs(lat) <= 30)
 
    } else {
      cdf.monthly <- cdf %>%
        group_by(lon,lat,month) %>%
-       summarise(value = mean(value,na.rm = TRUE),.groups = "keep") %>%
+       summarise(value =
+                   mean(value,na.rm = TRUE),.groups = "keep") %>%
        ungroup() %>%
        rename(!!cvar := value) %>%
-       filter(abs(lat) < 30)
+       filter(abs(lat) <= 30)
    }
 
 
@@ -159,6 +165,7 @@ for (cyear in years){
     }
 
 
+   nc_close(nc)
 
     system2("rm",nc.file)
 
@@ -177,4 +184,4 @@ saveRDS(df.all.monthly %>%
             dplyr::select(-Ndays),
         paste0("./outputs/df.CRUJRA3Q.Tropics.climate.RDS"))
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/summarise.climate.CRUJRA3Q.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/summarise.climate.CRUJRA3Q.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
