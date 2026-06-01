@@ -5,7 +5,8 @@ anomalies_spatraster_roll <- function(input,
                                  roll_window  = 12L,
                                  roll_align   = c("right","center","left"),
                                  roll_min_obs = NULL,
-                                 SD_threshold = 0.001) {
+                                 SD_threshold = 0.001,
+                                 Z_anom_threshold = 6) {
 
   roll_align <- match.arg(roll_align)
   if (is.null(roll_min_obs)) roll_min_obs <- ceiling(roll_window/2)
@@ -83,8 +84,6 @@ anomalies_spatraster_roll <- function(input,
   sd_floor <- quantile(vals[vals > 0], SD_threshold, na.rm = TRUE)
   sd12[sd12 < sd_floor] <- NA
 
-
-
   # --- anomalies & z-anomalies ---
   clim_expanded <- clim12[[m_all]]
   sd_expanded   <- sd12[[m_all]]
@@ -94,6 +93,8 @@ anomalies_spatraster_roll <- function(input,
 
   z_anom <- (input - clim_expanded) / sd_expanded
   z_anom <- ifel(sd_expanded == 0, NA, z_anom)
+  z_anom[abs(z_anom) > Z_anom_threshold] <- NA
+
   names(z_anom) <- paste0("z_", names(input))
 
   # --- trends over FULL series ---
