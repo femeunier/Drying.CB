@@ -14,11 +14,12 @@ library(terra)
 files <- list.files("./outputs/",
                     pattern = "*.climate.RDS",
                     full.names = TRUE)
-files <- files[grepl("3IMERG|Berk|CAMS|chirps|chirpsv3|CRU|CRUJRA3Q|ERA5|GLDAS|GPCC|MSWEP|NCEP",
+files <- (files[grepl("3IMERG|Berk|CAMS|chirps|chirpsv3|CRU|ERA5|GLDAS|GPCC|MSWEP|NCEP|GSMaP|CPC|JRA3Q",
+                     files)])
+# files <- files[grepl("Berk|CAMS|chirps|chirpsv3|CRU|ERA5|GLDAS|GPCC|MSWEP|NCEP|GSMaP|CPC|JRA3Q",
+#                      files)]
+files <- files[!grepl("CHELSA|CRUJRA|MERRA2|W5E5|GSWP",
                      files)]
-files <- files[grepl("3IMERG",
-                     files)]
-
 
 overwrite = TRUE
 
@@ -27,7 +28,7 @@ for (ifile in seq(1,length(files))){
   cfile <- files[ifile]
   cdataset <- strsplit(basename(cfile),
                        "\\.")[[1]][2]
-  print(cdataset)
+  print(paste0("-",cdataset))
 
   OP.file <- paste0(tools::file_path_sans_ext(cfile),".tif")
 
@@ -35,13 +36,23 @@ for (ifile in seq(1,length(files))){
     next()
   }
 
-  cdf <- readRDS(files[ifile]) %>%
-    rename(pre = MAP)
+  ctemp <- readRDS(files[ifile]) %>%
+    ungroup()
+
+  if ("MAP" %in% colnames(ctemp)) {
+    cdf <- ctemp %>%
+      rename(pre = MAP)
+  } else {
+    cdf <- ctemp
+  }
+
   cn <- colnames(cdf)
 
   cn2keep <- cn[!(cn %in% c("year","month","lon","lat"))]
+  print(cn2keep)
 
   times <- cdf %>%
+    ungroup() %>%
     dplyr::select(year,month) %>%
     distinct()
 
@@ -81,4 +92,4 @@ for (ifile in seq(1,length(files))){
 
 }
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/convert.climate.to.rast.R hpc:/data/gent/vo/000/gvo00074/felicien/R
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/convert.climate.to.rast.R hpc:/data/gent/vo/000/gvo00074/felicien/R

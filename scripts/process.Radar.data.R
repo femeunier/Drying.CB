@@ -9,7 +9,7 @@ library(dplyr)
 library(lubridate)
 
 # ---- Load .mat ----
-africa <- readMat('~/Downloads/Africa_Final_full_radar_YYT.mat')  # 1992–Sep 2024
+africa <- readMat('~/Downloads/Cband_radar_africa/Merged_LHSCAT_2025_all_afmask_v6.mat')  # 1992–Sep 2024
 
 # Input data (cell centers & time series)
 lonlat.mask <- africa$Af.cell.centers          # [ncell x 2] (lon, lat) in degrees
@@ -62,18 +62,18 @@ radar.africa.count[radar.africa.count == 0] <- NA
 radar.africa.grid <- radar.africa.data / radar.africa.count   # [ncol x nrow x ntime]
 
 # ---- Reshape to monthly [year, month] cubes as you had ----
-# Years 1992..2023 (32 years), plus Jan–Sep 2024 (9 months) = 393
-africa.radar.monthly <- array(NA_real_, dim = c(ncol, nrow, 33, 12))
+# Years 1992..2024 (33 years), plus Jan–Sep 2024 (9 months) = 393
+africa.radar.monthly <- array(NA_real_, dim = c(ncol, nrow, 34, 12))
 
 # Flip latitude for storage (so 1..nrow becomes south->north later when plotting)
-for (year in 1992:2023) {
+for (year in 1992:2024) {
   idx <- ((year - 1992) * 12 + 1):((year - 1992) * 12 + 12)
   month.radar.grid <- radar.africa.grid[, nrow:1, idx]
   africa.radar.monthly[, , year - 1991, ] <- month.radar.grid
 }
 
 # 2024 (first 9 months)
-year <- 2024
+year <- 2025
 africa.radar.monthly[, , 33, 1:9] <- radar.africa.grid[, nrow:1, ((year - 1992) * 12 + 1):ntime]
 
 # Annual means per cell per year, then climatological mean

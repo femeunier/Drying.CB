@@ -11,6 +11,7 @@ files <- list.files("./data/GRACE/",
                     full.names = TRUE)
 
 Mask <- read_sf("./data/Rainforests.shp")
+Mask <- vect(st_as_sfc(st_bbox(c(xmin = -20,ymin = -15,xmax = 55,ymax = 15),crs = 4326)))
 
 baseline_start <- as.Date("2000-01-01")
 baseline_end   <- as.Date("2024-12-31")
@@ -96,5 +97,5 @@ for (ifile in seq(1,length(files))){
 saveRDS(df.all,
         "./outputs/All.GRACE.CA.RDS")
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Extract.GRACE.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Extract.GRACE.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

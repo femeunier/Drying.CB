@@ -9,44 +9,8 @@ library(Drying.CB)
 files <- list.files("/data/gent/vo/000/gvo00074/felicien/R/outputs/all.climate",
                     pattern = "*.tif$",
                     full.names = TRUE)
-# files <- files[!grepl("CRUJRA_",files)]
+files <- files[grepl("SPEI6",files)]
 
-
-datasets_to_keep <- paste(
-  c(
-    "3IMERG", "Berk", "CAMS", "chirps", "chirpsv3", "CRU",
-    "ERA5", "GLDAS", "GPCC", "MSWEP", "NCEP", "GSMaP",
-    "CPC", "JRA3Q"
-  ),
-  collapse = "|"
-)
-
-vars_to_keep <- paste(
-  c(
-    "tas", "tasmin", "tasmax", "pre"
-  ),
-  collapse = "|"
-)
-
-datasets_to_exclude <- paste(
-  c("CHELSA", "CRUJRA", "MERRA2", "W5E5", "GSWP"),
-  collapse = "|"
-)
-
-files <- files[
-  grepl(
-    vars_to_keep,
-    basename(files)
-  ) &
-  grepl(
-    datasets_to_keep,
-    basename(files)
-  ) &
-    !grepl(
-      datasets_to_exclude,
-      basename(files)
-    )
-]
 
 Mask <- read_sf("./data/Rainforests.shp")
 Mask <- vect(st_as_sfc(
@@ -55,7 +19,7 @@ Mask <- vect(st_as_sfc(
     ymin = -15,
     xmax = 55,
     ymax = 15),
-  crs = 4326)
+    crs = 4326)
 ))
 
 df.all <- data.frame()
@@ -63,7 +27,7 @@ df.all <- data.frame()
 baseline_start <- as.Date("1985-01-01")
 baseline_end   <- as.Date("2014-12-31")
 
-suffix <- "rainfor"
+suffix <- "CA"
 
 for (ifile in seq(1,length(files))){
 
@@ -71,8 +35,6 @@ for (ifile in seq(1,length(files))){
   file.split <- strsplit(basename(cfile),"_")[[1]]
   cproduct <- file.split[1]
   cvar <- file.split[2]
-
-  if (!(cvar %in% c("tas","pre","tasmin","tasmax"))) next()
 
   print(paste0(cproduct,"-",cvar,"-",ifile,"/",length(files)))
 
@@ -83,7 +45,7 @@ for (ifile in seq(1,length(files))){
   ts <- global(cdata.msk,mean,na.rm = TRUE)
 
   cdf2save <- data.frame(time = time(cdata),
-                           mean = ts$mean) %>%
+                         mean = ts$mean) %>%
     mutate(year = year(time),
            month = month(time)) %>%
     rename(value = mean) %>%
@@ -107,8 +69,8 @@ for (ifile in seq(1,length(files))){
                                          baseline_start = baseline_start,
                                          baseline_end   = baseline_end,
                                          detrend = FALSE,
-                                         SD_threshold = 0.001,
-                                         Z_anom_threshold = 7)
+                                         SD_threshold = 0,
+                                         Z_anom_threshold = Inf)
 
   writeRaster(anomalies$trend,
               paste0("/data/gent/vo/000/gvo00074/felicien/R/outputs/Drying.CB/",
@@ -151,5 +113,5 @@ for (ifile in seq(1,length(files))){
 saveRDS(df.all,
         paste0("./outputs/All.climatevars.",suffix,".RDS"))
 
-# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Extract.allclimate.var.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Extract.allclimate.var_MCWD.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
 

@@ -6,12 +6,14 @@ library(dplyr)
 library(ggplot2)
 library(sf)
 library(raster)
+library(slider)
 library(tidyr)
 
 Ext <- ext(-180,180,-25,25)
 
-IF <- crop(rast("./data/shapefiles/Intact_mask_mod.tif"),
-           Ext)
+A <- rast("./data/shapefiles/Intact_mask_mod.tif")
+IF <- crop(A,
+           ext(A))
 
 
 # Radar.data <- rast("./outputs/Radar_all.years.tif")
@@ -116,8 +118,8 @@ for (ifile in seq(1,length(files))){
   ccrast.r <- mask(crast.r,IF,maskvalues=c(0,NA))
 
   Ndays <- (nlyr(crast)-1)/2
-  pos.gpp <- 2:(Ndays+1)
-  pos.ter <- (Ndays+2):nlyr(crast)
+  pos.gpp <- which(grepl("gpp",names(ccrast.r)))
+  pos.ter <- which(grepl("ter",names(ccrast.r)))
   gpp <- mean(-ccrast.r[[pos.gpp]])*365 *86400 *0.012
   ter <- mean(ccrast.r[[pos.ter]])*365 *86400 *0.012
   nep <- gpp - ter
