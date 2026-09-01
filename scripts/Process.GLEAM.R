@@ -1,7 +1,10 @@
 rm(list = ls())
 
-
 library(terra)
+
+# To download:
+# scp -P 2225 -r gleamuser@aether.ugent.be:/data/v4.3a/monthly/SMrz .
+# password: GLEAM4#h-cel_111
 
 all.vars <- list()
 # c("SMs","SMrz","S","Ep")
@@ -12,7 +15,7 @@ for (cvar in c("SMs","SMrz","S","Ep")){
 
   all.dates <- c()
 
-  for (cyear in 1980:2024){
+  for (cyear in 1980:2025){
 
     print(paste0(cvar,"-",cyear))
 
@@ -41,13 +44,4 @@ for (cvar in c("SMs","SMrz","S","Ep")){
 
 }
 
-# scp /home/femeunier/Documents/projects/Drying.CB/scripts/Process.GLEAM.R hpc:/data/gent/vo/000/gvo00074/felicien/R/
-
-
-A <- rast("~/Documents/data/GLEAM/Ep_all_years.tif")
-
-Comp <- rast("~/Documents/data/GLEAM/Ep_2023_GLEAM_v4.2a_MO.nc")
-
-plot(A[[526]])
-plot(crop(Comp[[10]],
-          ext(-180,180,-25,25)))
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/Process.GLEAM.R hpc:/data/gent/vo/000/gvo00074/felicien/R/

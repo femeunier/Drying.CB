@@ -6,7 +6,7 @@ library(lubridate)
 library(tidyr)
 library(stringr)
 
-files <- c("./outputs/All.climatevars.CA.RDS",
+files <- c("./outputs/All.climatevars.rainfor.RDS",
            "./outputs/All.CMIP6.vars.CA.RDS",
            "./outputs/All.GLEAM.CA.RDS",
            "./outputs/All.GPP.CA.RDS",

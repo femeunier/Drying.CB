@@ -14,7 +14,8 @@ overwrite <- TRUE
 
 datasets_to_keep <- paste(
   c(
-    "3IMERG", "Berk", "CAMS", "chirps", "chirpsv3", "CRU",
+    # "3IMERG",
+    "Berk", "CAMS", "chirps", "chirpsv3", "CRU",
     "ERA5", "GLDAS", "GPCC", "MSWEP", "NCEP", "GSMaP",
     "CPC", "JRA3Q"
   ),
@@ -924,16 +925,71 @@ for (ifile in seq_along(files)) {
         stopOnError = FALSE,
         messages = FALSE
       )) {
-        stop(
-          "Grid geometry changes in ",
-          cdataset,
-          " during ",
-          format(
-            times$date[itime],
-            "%Y-%m"
+
+        # If resolution and grid origin are unchanged, align the monthly
+        # raster with the fixed reference extent and fill missing cells with NA.
+        compatible_grid <- all(
+          abs(res(monthly_raster) - res(reference_geometry)) < 1e-8
+        ) &&
+          all(
+            abs(origin(monthly_raster) - origin(reference_geometry)) < 1e-8
+          ) &&
+          identical(
+            crs(monthly_raster, proj = TRUE),
+            crs(reference_geometry, proj = TRUE)
           )
+
+        if (!compatible_grid) {
+          stop(
+            "Grid resolution, origin or CRS changes in ",
+            cdataset,
+            " during ",
+            format(times$date[itime], "%Y-%m"),
+            ". Reference: ",
+            paste(res(reference_geometry), collapse = " × "),
+            "°; current: ",
+            paste(res(monthly_raster), collapse = " × "),
+            "°."
+          )
+        }
+
+        message(
+          "    Spatial coverage differs; aligning to reference grid."
         )
+
+        # crop = TRUE also handles the unlikely case where the monthly
+        # raster extends slightly beyond the reference extent.
+        monthly_raster <- extend(
+          monthly_raster,
+          reference_geometry,
+          fill = NA,
+          snap = "near"
+        )
+
+        monthly_raster <- crop(
+          monthly_raster,
+          reference_geometry,
+          snap = "near"
+        )
+
+        # Ensure the geometry is now exactly identical
+        if (!compareGeom(
+          reference_geometry,
+          monthly_raster,
+          stopOnError = FALSE,
+          messages = FALSE
+        )) {
+          stop(
+            "Could not align the grid for ",
+            cdataset,
+            " during ",
+            format(times$date[itime], "%Y-%m")
+          )
+        }
       }
+
+
+
     }
 
     for (ivar in seq_along(variables_to_process)) {

@@ -10,8 +10,10 @@ system2("scp",
         c("hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/All.timeseries.CA.RDS",
         "./outputs/"))
 
+All.timeseries.CA <- readRDS("./outputs/All.timeseries.CA.RDS") %>%
+  filter(model != "CIESM")
 
-A <- readRDS("./outputs/All.timeseries.CA.RDS") %>%
+A <- All.timeseries.CA %>%
   filter(var == "pre",
          year >= 1961,
          scenario  == "historical",
@@ -23,7 +25,7 @@ coef(lm(data = A,
            value ~ time))
 
 
-a <- readRDS("./outputs/All.timeseries.CA.RDS") %>%
+a <- All.timeseries.CA %>%
   filter(var == "pre",
          type == "Observational") %>%
   group_by(model) %>%
@@ -33,8 +35,8 @@ a <- readRDS("./outputs/All.timeseries.CA.RDS") %>%
                      "-",
                      year[year == max(year)],"/",month[year == max(year)]))
 
-A <- bind_rows(readRDS("./outputs/All.timeseries.CA.RDS"),
-               readRDS("./outputs/All.timeseries.CA.RDS") %>%
+A <- bind_rows(All.timeseries.CA,
+               All.timeseries.CA %>%
                  group_by(time,year,month,var,type,scenario) %>%
                  summarise(value = mean(value,na.rm = TRUE),
                            model = "MEM",
@@ -49,9 +51,32 @@ A <- bind_rows(readRDS("./outputs/All.timeseries.CA.RDS"),
   ungroup() %>%
   mutate(roll12 = case_when(var == "pre" ~ roll12_sum,
                             TRUE ~ roll12_mean)) %>%
-  dplyr::select(-c(roll12_sum,roll12_mean)) %>%
-  filter(model != "CIESM")
+  dplyr::select(-c(roll12_sum,roll12_mean))
 
+
+ggplot(A %>%
+         filter(year %in% 1981:2010)) +
+  geom_density(aes(x = value, fill = model),
+               alpha = 0.5, color = NA) +
+  facet_wrap(~ interaction(type,var), scales = "free") +
+  theme_bw() +
+  guides(fill = "none")
+
+ggplot(A %>%
+         filter(year %in% 1981:2010,
+                var == "tasmax",
+                type == "Observational")) +
+  geom_density(aes(x = value, fill = model),
+               alpha = 0.5, color = NA) +
+  facet_wrap(~ interaction(type,var), scales = "free") +
+  theme_bw()
+
+A %>%
+  filter(year %in% 1981:2010,
+         var == "pre",
+         type == "Observational") %>%
+  group_by(model) %>%
+  summarise(m = mean(value))
 
 ggplot(A %>%
          filter(year %in% 1981:2010)) +
@@ -73,29 +98,64 @@ A.anomaly <- A %>%
          anomaly.norm.rm =
            slide_dbl(anomaly.norm, mean, .before = 11, .complete = TRUE, na.rm = TRUE))
 
+cvar = "tas"
 ggplot(data = A.anomaly %>%
          filter(year >= 1961,
-                type == "Observational"),
+                type == "Observational",var == cvar),
+       aes(x = year + (month - 1/2)/12,
+           y = roll12)) +
+  geom_line(aes(color = model)) +
+  geom_line(data = A.anomaly %>%
+              filter(year >= 1961,
+                     type == "Observational",var == cvar,
+                     model == "MEM") ,
+            aes(x = year + (month - 1/2)/12,
+                y = roll12),
+            color = "black") +
+  stat_smooth(data = A.anomaly %>%
+                filter(year >= 1961,var == cvar,
+                       type == "Observational") ,
+              color = "black",
+              # method = "loess",
+              se = FALSE) +
+  facet_wrap(~ interaction(type,
+                           var),
+             scales = "free") +
+  scale_x_continuous(limits = c(1980,2027)) +
+  theme_bw()
+
+cvar = "pre"
+ggplot(data = A.anomaly %>%
+         filter(year >= 1961,
+                type == "Observational",var == cvar),
        aes(x = year + (month - 1/2)/12,
            y = roll12)) +
   geom_line(aes(color = model)) +
   geom_line(data = A.anomaly %>%
             filter(year >= 1961,
-                   type == "Observational",
+                   type == "Observational",var == cvar,
                    model == "MEM") ,
             aes(x = year + (month - 1/2)/12,
                 y = roll12),
             color = "black") +
   stat_smooth(data = A.anomaly %>%
-                filter(year >= 1961,
+                filter(year >= 1961,var == cvar,
                        type == "Observational") ,
-              color = "black", method = "lm", se = FALSE) +
+              color = "black",
+              # method = "loess",
+              se = FALSE) +
   facet_wrap(~ interaction(type,
                            var),
              scales = "free") +
-  scale_x_continuous(limits = c(1961,2025)) +
-  theme_bw() +
-  guides(color = "none")
+  scale_x_continuous(limits = c(1980,2027)) +
+  theme_bw()
+
+stop()
+
+A.anomaly %>%
+  filter(year >= 1961,
+         type == "Observational",var == "tasmax", model == "Berk") %>%
+  View()
 
 
 ggplot(data = A.anomaly %>%

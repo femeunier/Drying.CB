@@ -85,6 +85,6 @@ df.CRU <- df.CRU %>%
 
 saveRDS(df.CRU,"./outputs/df.GLDAS.Tropics.climate.RDS")
 
-# scp /home/femeunier/Documents/projects/YGB/scripts/summarise.precip.GLDAS.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R
+# scp /Users/felicien/Documents/projects/Drying.CB/scripts/summarise.climate.GLDAS.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R
 
 
