@@ -29,6 +29,8 @@ anomalies_spatraster_roll_blockwise <- function(
     block_nrows = NULL,
     datatype = "FLT4S",
     gdal = c("COMPRESS=DEFLATE", "PREDICTOR=3", "TILED=YES", "BIGTIFF=YES"),
+    finalize_retries = 30L,
+    finalize_wait_seconds = 2,
     progress = TRUE) {
 
   if (!inherits(input, "SpatRaster")) {
@@ -64,6 +66,16 @@ anomalies_spatraster_roll_blockwise <- function(
         Z_anom_threshold <= 0) {
       stop("`Z_anom_threshold` must be NULL or one positive number.")
     }
+  }
+
+  finalize_retries <- as.integer(finalize_retries)
+  if (length(finalize_retries) != 1L || is.na(finalize_retries) ||
+      finalize_retries < 1L) {
+    stop("`finalize_retries` must be a positive integer.")
+  }
+  if (length(finalize_wait_seconds) != 1L ||
+      !is.finite(finalize_wait_seconds) || finalize_wait_seconds < 0) {
+    stop("`finalize_wait_seconds` must be one non-negative number.")
   }
 
   all_outputs <- c(
@@ -247,7 +259,7 @@ anomalies_spatraster_roll_blockwise <- function(
 
   on.exit({
     if (input_open) try(terra::readStop(input), silent = TRUE)
-    if (!completed) {
+    if (!completed && exists("writers", inherits = FALSE)) {
       for (key in names(writers)) {
         if (isTRUE(writers[[key]]$open)) {
           try(terra::writeStop(writers[[key]]$raster), silent = TRUE)
@@ -540,11 +552,60 @@ anomalies_spatraster_roll_blockwise <- function(
   terra::readStop(input)
   input_open <- FALSE
 
-  result <- setNames(vector("list", length(all_outputs)), all_outputs)
+  # On parallel filesystems, writeStop() can finish the GDAL write but fail
+  # while immediately reopening the new GeoTIFF because its directory entry is
+  # not visible yet. Close every writer first and defer reopening until all
+  # handles have been finalized.
+  close_errors <- setNames(vector("list", length(writers)), names(writers))
+
   for (key in names(writers)) {
-    writers[[key]]$raster <- terra::writeStop(writers[[key]]$raster)
+    closed <- try(terra::writeStop(writers[[key]]$raster), silent = TRUE)
     writers[[key]]$open <- FALSE
-    result[[key]] <- writers[[key]]$raster
+
+    if (inherits(closed, "try-error")) {
+      close_errors[[key]] <- conditionMessage(attr(closed, "condition"))
+    }
+  }
+
+  # Release the writer objects and flush filesystem/GDAL state before testing
+  # whether the completed files can be opened.
+  rm(writers)
+  gc(verbose = FALSE)
+
+  reopen_with_retry <- function(path) {
+    last_error <- NULL
+
+    for (attempt in seq_len(finalize_retries)) {
+      candidate <- try(terra::rast(path), silent = TRUE)
+
+      if (!inherits(candidate, "try-error")) {
+        return(candidate)
+      }
+
+      last_error <- conditionMessage(attr(candidate, "condition"))
+
+      if (attempt < finalize_retries && finalize_wait_seconds > 0) {
+        Sys.sleep(finalize_wait_seconds)
+      }
+    }
+
+    stop(
+      "Output could not be opened after ", finalize_retries,
+      " attempts: ", path,
+      if (!is.null(last_error)) paste0("\nLast GDAL/terra error: ", last_error)
+    )
+  }
+
+  result <- setNames(vector("list", length(all_outputs)), all_outputs)
+  for (key in names(output_paths)) {
+    result[[key]] <- reopen_with_retry(output_paths[[key]])
+
+    if (!is.null(close_errors[[key]]) && isTRUE(progress)) {
+      message(
+        "Output finalized after a transient writeStop() error: ",
+        basename(output_paths[[key]])
+      )
+    }
   }
 
   completed <- TRUE
@@ -557,4 +618,3 @@ anomalies_spatraster_roll_blockwise <- function(
   result$files <- output_paths
   result
 }
-
