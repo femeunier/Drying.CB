@@ -618,3 +618,5 @@ anomalies_spatraster_roll_blockwise <- function(
   result$files <- output_paths
   result
 }
+
+
