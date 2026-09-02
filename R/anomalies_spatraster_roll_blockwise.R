@@ -383,7 +383,8 @@ anomalies_spatraster_roll_blockwise <- function(
   # Full windows are required at the time-series boundaries, as in
   # terra::roll(..., circular = FALSE). `right` means a trailing window,
   # `left` a forward window. For an even centered window, the extra position is
-  # placed after the focal layer.
+  # placed after the focal layer. Running sums/counts avoid repeatedly creating
+  # an ncell-by-roll_window matrix for every time step.
   roll_matrix <- function(x) {
     out <- matrix(NA_real_, nrow = nrow(x), ncol = ncol(x))
 
@@ -403,15 +404,42 @@ anomalies_spatraster_roll_blockwise <- function(
 
     if (first_i > last_i) return(out)
 
-    for (i in seq.int(first_i, last_i)) {
-      j <- seq.int(i - before, i + after)
-      window_values <- x[, j, drop = FALSE]
-      ok <- !is.na(window_values)
-      count <- rowSums(ok)
-      window_values[!ok] <- 0
-      value <- rowSums(window_values) / count
-      value[count < roll_min_obs | count == 0] <- NA_real_
-      out[, i] <- value
+    initial_columns <- seq_len(roll_window)
+    initial_values <- x[, initial_columns, drop = FALSE]
+    initial_ok <- is.finite(initial_values)
+    running_count <- rowSums(initial_ok)
+    initial_values[!initial_ok] <- 0
+    running_sum <- rowSums(initial_values)
+
+    store_window <- function(i) {
+      value <- running_sum / running_count
+      value[running_count < roll_min_obs | running_count == 0L] <- NA_real_
+      out[, i] <<- value
+    }
+
+    store_window(first_i)
+
+    if (last_i > first_i) {
+      for (i in seq.int(first_i + 1L, last_i)) {
+        leaving_column <- i - before - 1L
+        entering_column <- i + after
+
+        leaving <- x[, leaving_column]
+        entering <- x[, entering_column]
+
+        leaving_ok <- is.finite(leaving)
+        entering_ok <- is.finite(entering)
+
+        leaving[!leaving_ok] <- 0
+        entering[!entering_ok] <- 0
+
+        running_sum <- running_sum - leaving + entering
+        running_count <- (
+          running_count - as.integer(leaving_ok) + as.integer(entering_ok)
+        )
+
+        store_window(i)
+      }
     }
 
     out
@@ -618,5 +646,3 @@ anomalies_spatraster_roll_blockwise <- function(
   result$files <- output_paths
   result
 }
-
-

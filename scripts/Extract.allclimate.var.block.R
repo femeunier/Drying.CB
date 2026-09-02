@@ -211,7 +211,16 @@ raster_has_nlayers <- function(filename, expected_nlayers) {
   )
 }
 
-product_is_complete <- function(summary_file, anomaly_files, input_nlayers) {
+product_is_complete <- function(
+    completion_file,
+    summary_file,
+    anomaly_files,
+    input_nlayers) {
+
+  # Raster headers and layer counts can look valid even when a job stopped
+  # halfway through its spatial blocks. The marker is written only after the
+  # final validation at the end of process_file().
+  if (!file.exists(completion_file)) return(FALSE)
   if (!file.exists(summary_file)) return(FALSE)
 
   expected_nlayers <- c(
@@ -270,6 +279,10 @@ process_file <- function(ifile) {
   )
 
   anomaly_files <- make_anomaly_files(cproduct, cvar)
+  completion_file <- file.path(
+    output_dir,
+    paste0(cproduct, "_", cvar, "_", suffix, ".complete")
+  )
   temporary_files <- character()
 
   # Only files explicitly registered in temporary_files are removed. Never use
@@ -308,11 +321,19 @@ process_file <- function(ifile) {
 
   if (
     isTRUE(skip_completed) &&
-    product_is_complete(summary_file, anomaly_files, input_nlayers)
+    product_is_complete(
+      completion_file,
+      summary_file,
+      anomaly_files,
+      input_nlayers
+    )
   ) {
     message("Already complete and readable; skipping ", cproduct, "-", cvar)
     return(invisible(summary_file))
   }
+
+  # A new attempt invalidates any stale marker before output files are opened.
+  if (file.exists(completion_file)) unlink(completion_file, force = TRUE)
 
   crop_file <- file.path(terra_tmp, paste0(file_stem, "_crop.tif"))
   aligned_mask_file <- file.path(
@@ -447,7 +468,9 @@ process_file <- function(ifile) {
     outputs = names(anomaly_files),
     filenames = anomaly_files,
     overwrite = TRUE,
-    block_mem_mb = 512,
+    # Larger blocks substantially reduce R and GeoTIFF write overhead while
+    # remaining well below the 24 GB process limit.
+    block_mem_mb = 2048,
     finalize_retries = 60L,
     finalize_wait_seconds = 2
   )
@@ -458,9 +481,36 @@ process_file <- function(ifile) {
   gc(verbose = FALSE)
 
   # Validate the final files before declaring the product complete.
-  if (!product_is_complete(summary_file, anomaly_files, input_nlayers)) {
+  expected_nlayers <- c(
+    trend = 2L,
+    anom = input_nlayers,
+    z_anom = input_nlayers,
+    roll_mean_input = input_nlayers,
+    trend_anom = 2L,
+    trend_z_anom = 2L
+  )
+
+  final_checks <- vapply(
+    names(anomaly_files),
+    function(key) {
+      raster_has_nlayers(anomaly_files[[key]], expected_nlayers[[key]])
+    },
+    logical(1)
+  )
+
+  if (!file.exists(summary_file) || !all(final_checks)) {
     stop("One or more final outputs failed validation for ", cproduct, "-", cvar)
   }
+
+  writeLines(
+    c(
+      paste0("product=", cproduct),
+      paste0("variable=", cvar),
+      paste0("completed=", format(Sys.time(), tz = "UTC", usetz = TRUE)),
+      paste0("input=", cfile)
+    ),
+    completion_file
+  )
 
   message("Finished ", cproduct, "-", cvar)
   invisible(summary_file)
